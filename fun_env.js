@@ -42,11 +42,11 @@ fragment Edge on EventConnection {
 `;
 
 const queryEvent = (event, after = null) => {
-    return gql`
+  return gql`
     ${edge}
     query StakingRewardTokensWithdrawn {
       events (
-        first: 50 
+        first: 100
         typeId: "${event}"
         ordering: Ascending
         ${after == null ? "" : "after:\"" + after + "\""}
@@ -55,95 +55,157 @@ const queryEvent = (event, after = null) => {
       }
     }
  `
-  }
+}
 
 
 const collecitonEdges = (edge) => {
-    const { cursor, node } = edge;
-    const { time, transaction } = node;
-    const { hash, authorizers } = transaction;
-    const [{ address }] = authorizers
-    return {
-      cursor,
-      time,
-      hash,
-      address
-    };
+  const { cursor, node } = edge;
+  const { time, transaction } = node;
+  const { hash, authorizers } = transaction;
+  const [{ address }] = authorizers
+  return {
+    cursor,
+    time,
+    hash,
+    address
+  };
 }
 
-const getFields = (edges) => {
-    let return_node = {}
-    for (var i of edges) {
-      let { node } = i
-      if (node.type.name == "SoulMadeMainPurchased") {
-        return_node = node
-      }
+const getFields = (edges, event) => {
+  let return_node = {}
+  for (var i of edges) {
+    let { node } = i
+    if (node.type.name == "SoulMadeMainPurchased") {
+      return_node = node
     }
-    return return_node
   }
-
-const getCompFields = (edges) => {
-    let return_node = {}
-    for (var i of edges) {
-      let { node } = i
-      if (node.type.name == "SoulMadeComponentPurchased") {
-        return_node = node
-      }
-    }
-    return return_node
-  }
+  return return_node
+}
 
 const marketEdges = (edge) => {
-    var { cursor, node } = edge;
-    const { time, transaction } = node;
-    const { hash, authorizers, events } = transaction;
-    const [{ address }] = authorizers
-    const { edges } = events
-    var { _, fields } =  getFields(edges)
-    fields = fields.map((i) => i.value)
-    return {
-      cursor,
-      time,
-      hash,
-      address,
-      fields
-    };
-  }
+  var { cursor, node } = edge;
+  const { time, transaction } = node;
+  const { hash, authorizers, events } = transaction;
+  const [{ address }] = authorizers
+  const { edges } = events
+  var { _, fields } = getFields(edges)
+  fields = fields.map((i) => i.value)
+  return {
+    cursor,
+    time,
+    hash,
+    address,
+    fields
+  };
+}
 
-  const compmarketEdges = (edge) => {
-    var { cursor, node } = edge;
-    const { time, transaction } = node;
-    const { hash, authorizers, events } = transaction;
-    const [{ address }] = authorizers
-    const { edges } = events
-    var { _, fields } =  getCompFields(edges)
-    fields = fields.map((i) => i.value)
-    return {
-      cursor,
-      time,
-      hash,
-      address,
-      fields
-    };
+
+const getCompFields = (edges) => {
+  let return_node = {}
+  for (var i of edges) {
+    let { node } = i
+    if (node.type.name == "SoulMadeComponentPurchased") {
+      return_node = node
+    }
   }
-//  SoulMadeMainPurchased
+  return return_node
+}
+
+
+const compmarketEdges = (edge) => {
+  var { cursor, node } = edge;
+  const { time, transaction } = node;
+  const { hash, authorizers, events } = transaction;
+  const [{ address }] = authorizers
+  const { edges } = events
+  var { _, fields } = getCompFields(edges)
+  fields = fields.map((i) => i.value)
+  return {
+    cursor,
+    time,
+    hash,
+    address,
+    fields
+  };
+}
+
+const getDropOpenFields = (edges) => {
+  let return_node = {type:{name:""},fields:[]}
+  // let return_node = {}
+  for (var i of edges) {
+    let { node } = i
+    if (node.type.name == "SoulMadePackOpened") {
+      return_node = node
+    }
+  }
+  return return_node
+}
+
+const dropOpenEdges = (edge) => {
+  var { cursor, node } = edge;
+  const { time, transaction } = node;
+  const { hash, authorizers, events } = transaction;
+  const [{ address }] = authorizers
+  const { edges } = events
+  var { _, fields } = getDropOpenFields(edges)
+  fields = fields.map((i) => i.value)
+  return {
+    cursor,
+    time,
+    hash,
+    address,
+    fields
+  };
+}
+
+
+const getPackClaimFields = (edges) => {
+  let return_node = {type:{name:""},fields:[]}
+  for (var i of edges) {
+    let { node } = i
+    if (node.type.name == "SoulMadePackFreeClaim") {
+      return_node = node
+    }
+  }
+  return return_node
+}
+
+const packClaimEdges = (edge) => {
+  var { cursor, node } = edge;
+  const { time, transaction } = node;
+  const { hash, authorizers, events } = transaction;
+  const [{ address }] = authorizers
+  const { edges } = events
+  var { _, fields } = getPackClaimFields(edges)
+  fields = fields.map((i) => i.value)
+  return {
+    cursor,
+    time,
+    hash,
+    address,
+    fields
+  };
+}
+
 
 function delay(time) {
-    return new Promise(resolve => setTimeout(resolve, time));
+  return new Promise(resolve => setTimeout(resolve, time));
 }
 
 function writetoFile(info, file) {
-    for (var i of info) {
-      fs.writeFileSync(file, JSON.stringify(i, null, 2) + ",\n", { flag: "a+" }, 'utf-8');
-    }
+  for (var i of info) {
+    fs.writeFileSync(file, JSON.stringify(i, null, 2) + ",\n", { flag: "a+" }, 'utf-8');
   }
+}
 
 module.exports = {
-    client,
-    queryEvent,
-    delay,
-    writetoFile,
-    marketEdges,
-    collecitonEdges,
-    compmarketEdges
+  client,
+  queryEvent,
+  delay,
+  writetoFile,
+  marketEdges,
+  collecitonEdges,
+  compmarketEdges,
+  dropOpenEdges,
+  packClaimEdges
 }
