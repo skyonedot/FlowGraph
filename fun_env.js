@@ -58,6 +58,51 @@ const queryEvent = (event, after = null) => {
 }
 
 
+
+const queryTokenTransfer = (account,token, after = null) => {
+  return gql`
+  {
+    account(id: "${account}") {
+      tokenTransfers (
+        first: 5 
+        ordering: Descending
+        contractId: "${token}"
+        ${after == null ? "" : "after:\"" + after + "\""}
+        type: Deposit
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        edges {
+          node {
+            transaction {
+              hash
+              time
+            }
+            type
+            amount {
+              token {
+                id
+              }
+              value
+            }
+            counterparty {
+              address
+            }
+            counterpartiesCount
+          }
+        }
+      }
+    }
+  }
+  
+  `
+}
+
+
+
+
 const collecitonEdges = (edge) => {
   const { cursor, node } = edge;
   const { time, transaction } = node;
@@ -207,5 +252,6 @@ module.exports = {
   collecitonEdges,
   compmarketEdges,
   dropOpenEdges,
-  packClaimEdges
+  packClaimEdges,
+  queryTokenTransfer
 }
